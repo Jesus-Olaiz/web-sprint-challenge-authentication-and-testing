@@ -1,73 +1,91 @@
+const request = require('supertest')
+const server = require('./server')
+const db = require('../data/dbConfig')
+
+const Users = require('./users/users-model')
+
+let user = {
+  username: 'Olaysus',
+  password: 'thisIsABadPassword'
+}
+let token
 
 
-// Write your tests here
-test('sanity', () => {
-  expect(true).toBe(false)
+
+
+describe('sanity', () => {
+  test('this should be sane', () => {
+    expect('sanity').toBe('sanity');
+  })
 })
-const request = require('supertest');
-const app = require('../index'); // Assuming your Express app is exported from 'app.js' or similar.
 
-describe('Authentication Endpoints', () => {
-  // Define a test user object with username and password for registration and login tests.
-  const testUser = {
-    username: 'testuser',
-    password: 'testpassword',
-  };
 
-  // Test for the /register endpoint.
-  describe('POST /api/auth/register', () => {
-    it('should register a new user', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(testUser);
+describe('api/auth/register endpoint', () => {
+  test('[POST] /api/auth/register {payload} returns {id, username, password}' , () => {
 
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.username).toBe(testUser.username);
-      expect(response.body).toHaveProperty('password');
-    });
+    request(server)
+      .post('/auth/register')
+      .send(user)
+      .set('Accept', 'application/json')
+      .expect(201, {id: 4, username: 'newUser', password: '$2a$14$oGN4/apgcyMFko0W9oEw8.cX0gRJWACKLdMuexXYP2Gdiovotv3Ye'})
 
-    it('should return an error if username or password is missing', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({ username: '', password: '' }); // Sending empty fields
 
-      expect(response.status).toBe(401);
-      expect(response.body).toEqual({ message: 'username and password required' });
-    });
+  })
 
-    // Add a test for "username taken" scenario if needed.
-  });
+  test('[POST] /auth/register {empty payload} returns {message: "username and password required" ', () => {
+    request(server)
+      .post('/auth/register')
+      .send({})
+      .set('Accept', 'application/json')
+      .expect(401, {message: 'username and password required'})
+      
+  })
 
-  // Test for the /login endpoint.
-  describe('POST /api/auth/login', () => {
-    it('should login with valid credentials and return a token', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(testUser);
 
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe(`welcome, ${testUser.username}`);
-      expect(response.body).toHaveProperty('token');
-    });
+})
 
-    it('should return an error if username or password is missing', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({ username: '', password: '' }); // Sending empty fields
 
-      expect(response.status).toBe(403);
-      expect(response.body).toEqual({ message: 'username and password required' });
-    });
+describe('/auth/login endpoint', () => {
 
-    it('should return an error if username or password is incorrect', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({ username: 'incorrectUser', password: 'incorrectPassword' }); // Incorrect credentials
+  test('[POST] /auth/login {payload} returns {message, token}', async () => {
+    const res = await request(server)
+      .post('/auth/login')
+      .send({username: user.username, password: user.password})
+      .expect(200)
+      
 
-      expect(response.status).toBe(401);
-      expect(response.body).toEqual({ message: 'invalid credentials' });
-    });
-  });
-});
+    token = res.body.token
 
+
+  })
+
+
+  test('[POST] /auth/login {empty payload} returns the proper error', () => {
+    request(server)
+      .post('/auth/login')
+      .send({})
+      .set('Accept, application/json')
+      .expect({
+        "message": "username and password required"
+      })
+  })
+
+  test('[POST] /auth/login {invalid payload} returns the proper error', () => {
+      request(server)
+        .post('/auth/login')
+        .send({username:user.username, password:'wrongPassword'})
+        .set('Accept', 'application/json')
+        .expect({
+          "message": "invalid credentials"
+        })
+  })
+})
+
+describe('/jokes/ endpoint',() => {
+  test('[GET] /jokes {token} returns expected result', async () => {
+    request(server)
+    .get('/jokes')
+    .set("Authorization", token)
+    .expect(200)
+  })
+})
