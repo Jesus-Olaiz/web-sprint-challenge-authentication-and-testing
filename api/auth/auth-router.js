@@ -13,13 +13,14 @@ router.post('/register', nameCheck, async (req, res) => {
 
   try {
     const {username, password} = req.body
+
     
-    if(!username || !password){
-      res.status(401).json({message: "username and password required"})
+    if(!username.trim() || !password.trim()){
+      res.json({message: "username and password required"})
     }else{
       const newUser = await User.insert(req.body)
 
-      res.status(201).json(newUser)
+      res.json(newUser)
     }
     
 
@@ -60,17 +61,16 @@ router.post('/login', async (req, res) => {
   try {
     
 
-    let username = req.body.username.trim()
-    let password = req.body.password.trim()
+    const {username, password} = req.body
     
   
-    if(!username || !password){
-      res.status(403).json({message : "username and password required"})
+    if(!username.trim() || !password.trim()){
+      res.json({message : "username and password required"})
     }else{
       const user = await User.findBy('username', username)
 
       if (!user || !bcrypt.compareSync(password, user.password)){
-        res.status(401).json({message: 'invalid credentials'})
+        res.json({message: 'invalid credentials'})
       }else{
   
         const token = buildToken(user)
@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
         req.headers.authorization = token
         
 
-        res.status(200).json({message: `welcome, ${username}`, token})
+        res.json({message: `welcome, ${username}`, token})
       }
     }
     

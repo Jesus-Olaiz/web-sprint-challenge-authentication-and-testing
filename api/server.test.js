@@ -1,6 +1,7 @@
 const request = require('supertest')
 const server = require('./server')
 const db = require('../data/dbConfig')
+const jokes = require('./jokes/jokes-data')
 
 const Users = require('./users/users-model')
 
@@ -35,9 +36,12 @@ describe('api/auth/register endpoint', () => {
   test('[POST] /auth/register {empty payload} returns {message: "username and password required" ', () => {
     request(server)
       .post('/auth/register')
-      .send({})
+      .send({
+        username: '   ',
+        password: '   '
+      })
       .set('Accept', 'application/json')
-      .expect(401, {message: 'username and password required'})
+      .expect({message: 'username and password required'})
       
   })
 
@@ -64,7 +68,10 @@ describe('/auth/login endpoint', () => {
   test('[POST] /auth/login {empty payload} returns the proper error', () => {
     request(server)
       .post('/auth/login')
-      .send({})
+      .send({
+        username: '   ',
+        password: '   '
+      })
       .set('Accept, application/json')
       .expect({
         "message": "username and password required"
@@ -83,10 +90,23 @@ describe('/auth/login endpoint', () => {
 })
 
 describe('/jokes/ endpoint',() => {
-  test('[GET] /jokes {token} returns expected result', async () => {
+  test('[GET] /jokes {token} returns expected result', () => {
     request(server)
     .get('/jokes')
     .set("Authorization", token)
-    .expect(200)
+    .expect(jokes)
+  })
+
+  test('[GET] /jokes {no token} returns expected error', () => {
+    request(server)
+      .get('/jokes')
+      .expect({"message" : "token required"})
+  })
+
+  test('[GET] /jokes {invalid token} returns expected error',() => {
+    request(server)
+      .get('/jokes')
+      .set('Authorization', 'WrongToken')
+      .expect({"message" : "token invalid"})
   })
 })

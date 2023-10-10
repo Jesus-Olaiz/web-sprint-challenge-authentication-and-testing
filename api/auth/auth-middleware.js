@@ -8,11 +8,11 @@ const nameCheck = async (req, res, next) => {
         
         const user = await db('users').where('username', req.body.username).first()
 
-        console.log(user)
+        
 
 
         if(user){
-            res.status(401).json({message: "username taken"})
+            res.json({message: "username taken"})
         }else{
             next()
         }

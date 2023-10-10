@@ -3,8 +3,9 @@ const bcrypt = require('bcryptjs')
 
 
 
-const findBy = (filter, condition) => {
-    const user = db('users').where(`${filter}`, condition).first()
+const findBy = async (filter, condition) => {
+    const user = await db('users').where(filter, condition).first()
+    
     return user
 }
 
@@ -17,9 +18,9 @@ const insert = async (user) => {
 
     const newUser = await db('users').insert({username: user.username, password:user.password})
 
-    const foundUser = await db('users').where('id', newUser[0]).first()
+    const foundUser = await db('users').where('id', newUser[0])
 
-    return foundUser
+    return foundUser[0]
 }
 
 
