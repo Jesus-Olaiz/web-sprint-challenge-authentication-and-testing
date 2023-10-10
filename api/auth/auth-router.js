@@ -76,7 +76,7 @@ router.post('/login', async (req, res) => {
         const token = buildToken(user)
         
         req.headers.authorization = token
-        console.log(token)
+        
 
         res.status(200).json({message: `welcome, ${username}`, token})
       }

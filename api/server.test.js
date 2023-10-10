@@ -48,13 +48,14 @@ describe('api/auth/register endpoint', () => {
 describe('/auth/login endpoint', () => {
 
   test('[POST] /auth/login {payload} returns {message, token}', async () => {
-    const res = await request(server)
+    request(server)
       .post('/auth/login')
-      .send({username: user.username, password: user.password})
+      .send({username: user.username, password: user.password})      
       .expect(200)
-      
+      .then(res => {
+        token = res.body.token
+      })
 
-    token = res.body.token
 
 
   })
