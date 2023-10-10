@@ -1,112 +1,116 @@
 const request = require('supertest')
 const server = require('./server')
-const db = require('../data/dbConfig')
-const jokes = require('./jokes/jokes-data')
 
+const db = require('../data/dbConfig')
 const Users = require('./users/users-model')
 
-let user = {
-  username: 'Olaysus',
-  password: 'thisIsABadPassword'
+const jokes =  require('./jokes/jokes-data')
+
+const newUser = {
+  username: "newUser",
+  password: "badPassword"
 }
-let token
+
+
+beforeAll(async () => {
+  await db.migrate.rollback()
+  await db.migrate.latest()
+
+  // let pass = '1234'
+  // let hash = bcrypt.hashSync(pass, 14)
+
+
+  // await db('users').insert({username: "Olaysus", password: hash})
+
+  await Users.insert({username:"Olaysus", password:"1234"})
+})
 
 
 
 
 describe('sanity', () => {
-  test('this should be sane', () => {
-    expect('sanity').toBe('sanity');
+  test('PROCESS_ENV should be testing', () => {
+    expect(process.env.NODE_ENV).toBe('testing');
   })
 })
 
 
 describe('api/auth/register endpoint', () => {
-  test('[POST] /api/auth/register {payload} returns {id, username, password}' , () => {
 
-    request(server)
-      .post('/auth/register')
-      .send(user)
-      .set('Accept', 'application/json')
-      .expect(201, {id: 4, username: 'newUser', password: '$2a$14$oGN4/apgcyMFko0W9oEw8.cX0gRJWACKLdMuexXYP2Gdiovotv3Ye'})
-
-
+  test('[POST] /api/auth/register {payload} returns {id, username, password}' , async () => {
+    const res = await request(server).post('/api/auth/register').send(newUser)
+    const foundUser = await db('users').where('username', 'newUser').first()
+    expect(res.body).toMatchObject(foundUser)
   })
 
-  test('[POST] /auth/register {empty payload} returns {message: "username and password required" ', () => {
-    request(server)
-      .post('/auth/register')
-      .send({
-        username: '   ',
-        password: '   '
-      })
-      .set('Accept', 'application/json')
-      .expect({message: 'username and password required'})
-      
+
+  test('[POST] /api/auth/register {empty payload} returns expected error', async () => {
+    const res = await request(server).post('/api/auth/register').send({username: '   ', password: '   '})
+    expect(res.body).toMatchObject({"message": "username and password required"})
   })
 
+  test('[POST] /api/auth/register {used payload} returns expected error', async () => {
+    const res = await request(server).post('/api/auth/register').send({username:'Olaysus', password:'1234'})
+
+    expect(res.body).toMatchObject({"message": "username taken"})
+  })
 
 })
 
 
-describe('/auth/login endpoint', () => {
+describe('api/auth/login endpoint', () => {
+  test('[POST] api/auth/login {valid credentials} returns success with token', async () => {
+    const res = await request(server).post('/api/auth/login').send({username:'Olaysus', password:'1234'})
 
-  test('[POST] /auth/login {payload} returns {message, token}', async () => {
-    request(server)
-      .post('/auth/login')
-      .send({username: user.username, password: user.password})      
-      .expect({
-        "message":"welcome, Olaysus"
-      })
-      
+    expect(res.body).toMatchObject({"message": "welcome, Olaysus"})
+    expect(res.body).toHaveProperty('token')
+  })
 
+  test('[POST] api/auth/login {empty credentials} returns expected error', async () => {
+    const response = await request(server).post('/api/auth/login').send({username: "   ", password: "   "})
 
+    expect(response.body).toMatchObject({
+      "message": "username and password required"
+    })
 
   })
 
+  test('[POST] api/auth/login {invalid credentials} returns expected error', async () => {
+    const response = await request(server).post('/api/auth/login').send({username: "Olaysus", password: "124"})
 
-  test('[POST] /auth/login {empty payload} returns the proper error', () => {
-    request(server)
-      .post('/auth/login')
-      .send({
-        username: '   ',
-        password: '   '
-      })
-      .set('Accept, application/json')
-      .expect({
-        "message": "username and password required"
-      })
-  })
-
-  test('[POST] /auth/login {invalid payload} returns the proper error', () => {
-      request(server)
-        .post('/auth/login')
-        .send({username:user.username, password:'wrongPassword'})
-        .set('Accept', 'application/json')
-        .expect({
-          "message": "invalid credentials"
-        })
+    expect(response.body).toMatchObject({
+      "message": "invalid credentials"
+    })
   })
 })
 
-describe('/jokes/ endpoint',() => {
-  test('[GET] /jokes {token} returns expected result', () => {
-    request(server)
-    .get('/jokes')
-    .set("Authorization", token)
-    .expect(jokes)
+
+describe('api/jokes endpoint', () => {
+  test('[GET] api/jokes {valid token} returns array of jokes', async () => {
+    const loggedInUser = await request(server).post('/api/auth/login').send({
+      username: 'Olaysus',
+      password: '1234'
+    })
+
+    const newJokes = await request(server).get('/api/jokes').set('Authorization', loggedInUser.body.token)
+
+
+    expect(newJokes.body).toEqual(jokes)
   })
 
-  test('[GET] /jokes {no token} returns expected error', () => {
-    request(server)
-      .get('/jokes')
-      .expect({"message" : "token required"})
-  })
 
-  test('[GET] /jokes {invalid token} returns expected error',() => {
-    request(server)
-      .get('/jokes')
-      .set('Authorization', 'WrongToken')
-      .expect({"message" : "token invalid"})
+  test('[GET] api/jokes {no token} returns expected error', async () => {
+    const res = await request(server).get('/api/jokes')
+
+    expect(res.body).toMatchObject({
+      "message": "token required"
+    })
+  })
+  test('[GET] api/jokes {invalid token} returns expected error', async () => {
+    const res = await request(server).get('/api/jokes').set('Authorization', 'secret')
+
+    expect(res.body).toMatchObject({
+      "message": "token invalid"
+    })
   })
 })

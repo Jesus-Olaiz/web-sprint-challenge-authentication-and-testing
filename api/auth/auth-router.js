@@ -8,8 +8,6 @@ const User = require('../users/users-model')
 const { nameCheck } = require('./auth-middleware')
 
 router.post('/register', nameCheck, async (req, res) => {
-  
-
 
   try {
     const {username, password} = req.body
@@ -20,7 +18,7 @@ router.post('/register', nameCheck, async (req, res) => {
     }else{
       const newUser = await User.insert(req.body)
 
-      res.json(newUser)
+      res.status(201).json(newUser)
     }
     
 
