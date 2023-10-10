@@ -8,7 +8,7 @@
     "latest": "knex migrate:latest",
     "rollback": "knex migrate:rollback",
     "seed": "knex seed:run",
-    "resetdb": "npm run rollback && npm run latest && npm run seed",
+    "resetdb": "npm run rollback && npm run latest",
     "test": "cross-env NODE_ENV=testing jest --verbose --runInBand --silent --watch"
   },
   "repository": {

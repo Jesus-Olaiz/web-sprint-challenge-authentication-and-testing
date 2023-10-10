@@ -55,10 +55,10 @@ describe('/auth/login endpoint', () => {
     request(server)
       .post('/auth/login')
       .send({username: user.username, password: user.password})      
-      .expect(200)
-      .then(res => {
-        token = res.body.token
+      .expect({
+        "message":"welcome, Olaysus"
       })
+      
 
 
 
