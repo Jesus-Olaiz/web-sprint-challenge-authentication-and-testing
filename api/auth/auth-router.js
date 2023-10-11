@@ -7,27 +7,18 @@ const { JWT_SECRET } = require('../../config')
 const User = require('../users/users-model')
 const { nameCheck } = require('./auth-middleware')
 
-router.post('/register', nameCheck, async (req, res) => {
+router.post('/register', nameCheck, async (req, res, next) => {
 
   try {
-    const {username, password} = req.body
 
-    
-    if(!username.trim() || !password.trim()){
-      res.json({message: "username and password required"})
-    }else{
-      const newUser = await User.insert(req.body)
+    const newUser = await User.insert(req.body)
 
-      res.status(201).json(newUser)
-    }
+    res.json(newUser)
     
 
   } catch (error) {
-    res.status(500).json({message: error.message} )
+    next(error)
   }
-
-
-
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -55,40 +46,27 @@ router.post('/register', nameCheck, async (req, res) => {
   */
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   try {
-    
+    const { username, password } = req.body;
 
-    const {username, password} = req.body
-    
-  
-    if(!username.trim() || !password.trim()){
-      res.json({message : "username and password required"})
-    }else{
-      const user = await User.findBy('username', username)
-
-      if (!user || !bcrypt.compareSync(password, user.password)){
-        res.json({message: 'invalid credentials'})
-      }else{
-  
-        const token = buildToken(user)
-        
-        req.headers.authorization = token
-        
-
-        res.json({message: `welcome, ${username}`, token})
-      }
+    if (!username || !password || !username.trim() || !password.trim()) {
+        return res.json({ message: 'username and password required' });
     }
+
+    const user = await User.findBy('username', username);
+
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+        return res.json({ message: 'invalid credentials' });
+    }
+
+    const token = buildToken(user);
+    req.headers.authorization = token;
     
-
-
-
-  } catch (error) {
-    res.status(500).json({message: error.message})
-  }
-
-
-
+    return res.json({ message: `welcome, ${username}`, token });
+} catch (error) {
+    next(error)
+}
 
   /*
     IMPLEMENT
@@ -115,6 +93,13 @@ router.post('/login', async (req, res) => {
   */
 });
 
+router.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    message: err,
+    customMessage: "Something bad happened within the accounts router"
+  });
+});
+
 
 function buildToken(user) {
   const payload = {
@@ -130,4 +115,4 @@ function buildToken(user) {
 
 }
 
-module.exports = router;
+module.exports = router

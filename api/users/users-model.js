@@ -18,9 +18,9 @@ const insert = async (user) => {
 
     const newUser = await db('users').insert({username: user.username, password:user.password})
 
-    const foundUser = await db('users').where('id', newUser[0])
+    
 
-    return foundUser[0]
+    return await db('users').where('id', newUser).first()
 }
 
 

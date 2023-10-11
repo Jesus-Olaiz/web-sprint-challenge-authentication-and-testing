@@ -46,7 +46,7 @@ describe('api/auth/register endpoint', () => {
 
   test('[POST] /api/auth/register {empty payload} returns expected error', async () => {
     const res = await request(server).post('/api/auth/register').send({username: '   ', password: '   '})
-    expect(res.body).toMatchObject({"message": "username and password required"})
+    expect(res.body.message).toBe("username and password required")
   })
 
   test('[POST] /api/auth/register {used payload} returns expected error', async () => {
@@ -92,7 +92,7 @@ describe('api/jokes endpoint', () => {
       password: '1234'
     })
 
-    const newJokes = await request(server).get('/api/jokes').set('Authorization', loggedInUser.body.token)
+    const newJokes = await request(server).get('/api/jokes').set('authorization', loggedInUser.body.token)
 
 
     expect(newJokes.body).toEqual(jokes)
