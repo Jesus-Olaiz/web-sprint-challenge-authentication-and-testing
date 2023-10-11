@@ -3,16 +3,17 @@ const db = require('../../data/dbConfig')
 const nameCheck = async (req, res, next) => {
     try {
 
-        const user = await db('users').where('username', req.body.username).first()
+        let user
 
 
         if(!req.body.username || !req.body.password){
             return res.status(401).json({message: 'username and password required'})
         }
-
         if(!req.body.username.trim() || !req.body.password.trim()){
             return res.status(401).json({message: "username and password required"})
-          }
+        }else{
+            user = await db('users').where('username', req.body.username).first()
+        }
 
         
         
