@@ -16,12 +16,6 @@ beforeAll(async () => {
   await db.migrate.rollback()
   await db.migrate.latest()
 
-  // let pass = '1234'
-  // let hash = bcrypt.hashSync(pass, 14)
-
-
-  // await db('users').insert({username: "Olaysus", password: hash})
-
   await Users.insert({username:"Olaysus", password:"1234"})
 })
 

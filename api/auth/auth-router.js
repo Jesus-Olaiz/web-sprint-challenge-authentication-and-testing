@@ -2,16 +2,39 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
+const db = require('../../data/dbConfig')
+
+
 const { JWT_SECRET } = require('../../config')
 
 const User = require('../users/users-model')
 const { nameCheck } = require('./auth-middleware')
 
+
+const insert = async (user) => {
+    
+  const hash = bcrypt.hashSync(user.password, 4)
+
+  user.password = hash
+
+
+  const newUser = await db('users').insert({username: user.username, password:user.password})
+
+  
+
+  return await db('users').where('id', newUser).first()
+}
+
+
+
+
+
+
 router.post('/register', nameCheck, async (req, res, next) => {
 
   try {
 
-    const newUser = await User.insert(req.body)
+    const newUser = await insert(req.body)
 
     res.json(newUser)
     

@@ -11,7 +11,7 @@ const findBy = async (filter, condition) => {
 
 const insert = async (user) => {
     
-    const hash = bcrypt.hashSync(user.password, 14)
+    const hash = bcrypt.hashSync(user.password, 4)
 
     user.password = hash
 
