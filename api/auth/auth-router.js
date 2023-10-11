@@ -36,7 +36,7 @@ router.post('/register', nameCheck, async (req, res, next) => {
 
     const newUser = await insert(req.body)
 
-    res.json(newUser)
+    res.status(200).json(newUser)
     
 
   } catch (error) {
@@ -74,13 +74,13 @@ router.post('/login', async (req, res, next) => {
     const { username, password } = req.body;
 
     if (!username || !password || !username.trim() || !password.trim()) {
-        return res.json({ message: 'username and password required' });
+        return res.status(401).json({ message: 'username and password required' });
     }
 
     const user = await User.findBy('username', username);
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-        return res.json({ message: 'invalid credentials' });
+        return res.status(403).json({ message: 'invalid credentials' });
     }
 
     const token = buildToken(user);
